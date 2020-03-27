@@ -1,0 +1,19 @@
+{
+  "name": "chatapp",
+  "version": "1.0.0",
+  "description": "A chat application that written with javascript",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fatihinho/chatapp-js.git"
+  },
+  "author": "Fatih Çınar",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fatihinho/chatapp-js/issues"
+  },
+  "homepage": "https://github.com/fatihinho/chatapp-js#readme"
+}
