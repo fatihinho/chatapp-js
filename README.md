@@ -1,5 +1,5 @@
 # chatapp-js
-A chat application that written with JavaScript
+JavaScript - Chat Application
 
 ### `npm run server`
 Runs the app in the development mode.<br />
