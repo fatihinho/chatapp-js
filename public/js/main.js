@@ -2,17 +2,33 @@
 
 const socket = io();
 
+const userList = document.getElementById('users');
+const roomName = document.getElementById('room-name');
 const chatForm = document.getElementById('chat-form');
 const chatMessages = document.querySelector('.chat-messages');
+
+// URL'den parametre değerlerini alır
+const url = window.location.search;
+const urlParams = new URLSearchParams(url);
+const username = urlParams.get('username');
+const room = urlParams.get('room');
 
 
 // Server tarafından mesaj alır
 socket.on('message', message => {
-    console.log(message);
     outputMessage(message);
 
     // Scroll Down - Mesaj yazıldıkça mesajları takip eder
     chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+// Server'a username, room parametrelerini yollar
+socket.emit('joinRoom', { username, room });
+
+// Server'dan belirli bir odadaki kullanıcıları ve odanın ismini alır
+socket.on('roomUsers', ({ room, users }) => {
+    outputRoomName(room);
+    outputUsers(users);
 });
 
 // Kullanıcı mesajlarını buton ile göndermek için tutar
@@ -42,4 +58,14 @@ function outputMessage(message) {
 
     // Html dosyasındaki class adı "chat-messages" olan elemente div'i ekler
     chatMessages.appendChild(div);
+}
+
+// Oda ismini sidebar'a yazdırır
+function outputRoomName(room) {
+    roomName.innerText = room;
+}
+
+function outputUsers(users) {
+    userList.innerHTML = 
+    `${users.map(user => `<li>${user.username}</li>`).join('')}`;
 }

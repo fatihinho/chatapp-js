@@ -5,6 +5,7 @@ const path = require('path');
 const express = require('express');
 const socketio = require('socket.io');
 const formatMessages = require('./utils/messages');
+const { joinUser, getCurrentUser, userLeave, getRoomUsers } = require('./utils/users');
 
 
 // Server Bileşenleri
@@ -23,20 +24,44 @@ app.use(express.static(path.join(__dirname, 'public')));
 io.on('connection', socket => {
     console.log('Yeni Bağlantı...');
 
-    // Client tarafına, belirli bir kişiye mesaj gönderir
-    socket.emit('message', formatMessages(chatBot, 'Sohbet\'e Hoşgeldin!'));
+    // Client'tan username, room parametrelerini alarak işlemler gerçekleştirir
+    socket.on('joinRoom', ({ username, room }) => {
+        const user = joinUser(socket.id, username, room);
+        
+        // Socket'teki mevcut id'li kullanıcı ile mevcut odayı birbirine bind eder
+        socket.join(user.room);
 
-    // Client tarafına, toplu bir mesaj gönderir 
-    socket.broadcast.emit('message', formatMessages(chatBot, 'Sohbet\'e bir kullanıcı katıldı'));
+        // Client tarafına, belirli bir kişiye mesaj gönderir
+        socket.emit('message', formatMessages(chatBot, `Sohbet\'e Hoşgeldin ${username}!`));
+    
+        // Client tarafına, belirli bir odaya, toplu bir mesaj gönderir 
+        socket.broadcast.to(user.room).emit('message', formatMessages(chatBot, `${username} katıldı!`));
 
-    // Kullanıcı ayrıldığında çalışır
-    socket.on('disconnect', () => {
-        io.emit('message', formatMessages(chatBot, 'Bir kullanıcı sohbet\'ten ayrıldı'));
+        // Sidebar'a oda ismini ve o odadaki kullanıcıları yazdırmak için verileri Client'a gönderir
+        io.to(user.room).emit('roomUsers', { 
+            room: user.room,
+            users: getRoomUsers(user.room)
+        });
     });
-
+     
     // Client'tan mesajı alır
     socket.on('chatMessage', msg => {
-       io.emit('message', formatMessages('user', msg)); 
+        const user = getCurrentUser(socket.id);
+        io.to(user.room).emit('message', formatMessages(user.username, msg)); 
+    });
+   
+    // Kullanıcı ayrıldığında çalışır
+    socket.on('disconnect', () => {
+        const user = userLeave(socket.id);
+        if (user) {
+            io.to(user.room).emit('message', formatMessages(chatBot, `${user.username} ayrıldı!`));
+            
+            // Ayrılık gerçekleştiğinde sidebar'ı günceller
+            io.to(user.room).emit('roomUsers', { 
+                room: user.room,
+                users: getRoomUsers(user.room)
+            });
+        }
     });
 });
 
